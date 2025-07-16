@@ -1,0 +1,14 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - test
+    excludePaths:
+        - vendor
+    ignoreErrors:
+        # Allow PhpSpec test method issues
+        - '#Method spec\\App\\.*::.* has no return type specified#'
+        - '#Call to an undefined method spec\\App\\UrlValidatorSpec::isValid\(\)#'
+        - '#Class spec\\App\\UrlValidatorSpec extends generic class PhpSpec\\ObjectBehavior but does not specify its types: TKey, TValue#'
+        # Allow array type annotation issues for parse_url result
+        - '#Method App\\UrlValidator::reconstructUrl\(\) has parameter \$urlParts with no value type specified in iterable type array#'

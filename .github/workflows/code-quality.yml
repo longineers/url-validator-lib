@@ -1,0 +1,208 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  phpstan:
+    runs-on: ubuntu-latest
+    name: PHPStan Static Analysis
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+        tools: composer, phpstan
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Create PHPStan config
+      run: |
+        cat > phpstan.neon << 'EOF'
+        parameters:
+            level: max
+            paths:
+                - src
+                - test
+            excludePaths:
+                - vendor
+        EOF
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse --no-progress
+
+  php-cs-fixer:
+    runs-on: ubuntu-latest
+    name: PHP CS Fixer
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+        tools: composer, php-cs-fixer
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Create PHP CS Fixer config
+      run: |
+        cat > .php-cs-fixer.dist.php << 'EOF'
+        <?php
+
+        $finder = PhpCsFixer\Finder::create()
+            ->in(__DIR__.'/src')
+            ->in(__DIR__.'/test')
+            ->exclude('vendor');
+
+        $config = new PhpCsFixer\Config();
+        return $config->setRules([
+                '@PSR12' => true,
+                'array_syntax' => ['syntax' => 'short'],
+                'no_unused_imports' => true,
+                'not_operator_with_successor_space' => true,
+                'trailing_comma_in_multiline' => true,
+                'phpdoc_scalar' => true,
+                'unary_operator_spaces' => true,
+                'binary_operator_spaces' => true,
+                'blank_line_before_statement' => [
+                    'statements' => ['break', 'continue', 'declare', 'return', 'throw', 'try'],
+                ],
+                'phpdoc_single_line_var_spacing' => true,
+                'phpdoc_var_without_name' => true,
+                'class_attributes_separation' => [
+                    'elements' => [
+                        'method' => 'one',
+                    ],
+                ],
+                'method_argument_space' => [
+                    'on_multiline' => 'ensure_fully_multiline',
+                    'keep_multiple_spaces_after_comma' => true,
+                ],
+                'single_trait_insert_per_statement' => true,
+            ])
+            ->setFinder($finder);
+        EOF
+
+    - name: Run PHP CS Fixer
+      run: php-cs-fixer fix --dry-run --diff --verbose
+
+  psalm:
+    runs-on: ubuntu-latest
+    name: Psalm Static Analysis
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+        tools: composer, psalm
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Create Psalm config
+      run: |
+        cat > psalm.xml << 'EOF'
+        <?xml version="1.0"?>
+        <psalm
+            errorLevel="1"
+            resolveFromConfigFile="true"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="https://getpsalm.org/schema/config"
+            xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+        >
+            <projectFiles>
+                <directory name="src" />
+                <directory name="test" />
+                <ignoreFiles>
+                    <directory name="vendor" />
+                </ignoreFiles>
+            </projectFiles>
+        </psalm>
+        EOF
+
+    - name: Run Psalm
+      run: psalm --output-format=github
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Code Coverage
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+        coverage: xdebug
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Run tests with coverage
+      run: |
+        mkdir -p build/logs
+        php -d memory_limit=2G vendor/bin/phpspec run --config test/phpspec.yml --format=pretty --no-code-generation
+      env:
+        XDEBUG_MODE: coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./build/logs/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false

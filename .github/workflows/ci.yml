@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.3', '8.4']
+        dependency-version: [prefer-lowest, prefer-stable]
+
+    name: PHP ${{ matrix.php-version }} - ${{ matrix.dependency-version }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: intl, zip, xml
+        coverage: xdebug
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-${{ matrix.php-version }}-
+
+    - name: Install dependencies
+      run: |
+        composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-suggest
+
+    - name: Run PHPSpec tests
+      run: composer test
+
+    - name: Run PHPSpec tests with coverage
+      run: |
+        vendor/bin/phpspec run --config test/phpspec.yml --format=pretty --no-code-generation
+
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+        tools: composer, phpstan, php-cs-fixer
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Run PHP Code Sniffer
+      run: |
+        if [ -f "phpcs.xml" ]; then
+          vendor/bin/phpcs --standard=phpcs.xml src/ test/
+        else
+          echo "No phpcs.xml found, skipping PHP CS check"
+        fi
+      continue-on-error: true
+
+    - name: Run PHPStan
+      run: |
+        if [ -f "phpstan.neon" ]; then
+          vendor/bin/phpstan analyse
+        else
+          echo "No phpstan.neon found, skipping PHPStan analysis"
+        fi
+      continue-on-error: true
+
+  security:
+    runs-on: ubuntu-latest
+    name: Security Check
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: intl, zip, xml
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-8.3-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-8.3-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-interaction
+
+    - name: Security Checker
+      uses: symfonycorp/security-checker-action@v5
+
+  docker:
+    runs-on: ubuntu-latest
+    name: Docker Build Test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build development Docker image
+      run: |
+        docker build -t url-validator-lib:dev .
+
+    - name: Build production Docker image
+      run: |
+        docker build -f Dockerfile.prod -t url-validator-lib:prod .
+
+    - name: Test Docker container
+      run: |
+        docker run --rm -d --name test-container url-validator-lib:dev
+        sleep 10
+        docker ps -a
+        docker logs test-container
+        docker stop test-container || true
+
+    - name: Run security scan on Docker image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'url-validator-lib:prod'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
