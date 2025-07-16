@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 # Create a non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser

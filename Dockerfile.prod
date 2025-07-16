@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for production
 # Stage 1: Build stage
-FROM php:8.3-cli AS builder
+FROM php:8.4-cli AS builder
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -36,7 +36,7 @@ COPY . .
 RUN composer dump-autoload --optimize --classmap-authoritative
 
 # Stage 2: Production stage
-FROM php:8.3-cli AS production
+FROM php:8.4-cli AS production
 
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
