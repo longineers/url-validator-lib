@@ -164,7 +164,7 @@ jobs:
         EOF
 
     - name: Run Psalm
-      run: psalm --output-format=github
+      run: vendor/bin/psalm --output-format=github
 
   coverage:
     runs-on: ubuntu-latest
