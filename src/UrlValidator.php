@@ -42,7 +42,10 @@ class UrlValidator
         return false !== filter_var($reconstructedUrl, FILTER_VALIDATE_URL);
     }
 
-    private function reconstructUrl(array<string, string|int> $urlParts): string
+    /**
+     * @param array<string, string|int> $urlParts
+     */
+    private function reconstructUrl(array $urlParts): string
     {
         $url = '';
 
