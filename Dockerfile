@@ -31,8 +31,8 @@ ENV COMPOSER_ROOT_VERSION=dev-main
 # Copy composer files first for better caching
 COPY composer.json composer.lock* ./
 
-# Install PHP dependencies (without dev dependencies) as root, then change ownership
-RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader \
+# Install PHP dependencies (including dev dependencies) as root, then change ownership
+RUN composer install --no-scripts --no-autoloader --optimize-autoloader \
     && composer dump-autoload --optimize \
     && chown -R appuser:appuser /app
 
