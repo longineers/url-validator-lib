@@ -5,6 +5,11 @@ namespace spec\App;
 use App\UrlValidator;
 use PhpSpec\ObjectBehavior;
 
+/**
+ * @template TObject of object
+ * @template TSubject
+ * @extends ObjectBehavior<TObject, TSubject>
+ */
 class UrlValidatorSpec extends ObjectBehavior
 {
     public function it_is_initializable()
