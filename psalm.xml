@@ -16,5 +16,11 @@
     </projectFiles>
     <issueHandlers>
         <UnusedClass errorLevel="suppress" />
+        <UndefinedMagicMethod>
+            <file name="test/spec/UrlValidatorSpec.php" />
+        </UndefinedMagicMethod>
+        <MixedMethodCall>
+            <file name="test/spec/UrlValidatorSpec.php" />
+        </MixedMethodCall>
     </issueHandlers>
 </psalm>
