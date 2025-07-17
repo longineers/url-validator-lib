@@ -29,7 +29,7 @@ class UrlValidator
         }
 
         // Only allow http and https schemes
-        if (!isset($urlParts['scheme']) || !in_array(strtolower($urlParts['scheme']), ['http', 'https'], true)) {
+        if (! isset($urlParts['scheme']) || ! in_array(strtolower($urlParts['scheme']), ['http', 'https'], true)) {
             return false;
         }
 
@@ -47,35 +47,35 @@ class UrlValidator
         $url = '';
 
         if (isset($urlParts['scheme'])) {
-            $url .= $urlParts['scheme'] . '://';
+            $url .= (string) $urlParts['scheme'] . '://';
         }
 
         if (isset($urlParts['user'])) {
-            $url .= $urlParts['user'];
+            $url .= (string) $urlParts['user'];
             if (isset($urlParts['pass'])) {
-                $url .= ':' . $urlParts['pass'];
+                $url .= ':' . (string) $urlParts['pass'];
             }
             $url .= '@';
         }
 
         if (isset($urlParts['host'])) {
-            $url .= $urlParts['host'];
+            $url .= (string) $urlParts['host'];
         }
 
         if (isset($urlParts['port'])) {
-            $url .= ':' . $urlParts['port'];
+            $url .= ':' . (string) $urlParts['port'];
         }
 
         if (isset($urlParts['path'])) {
-            $url .= $urlParts['path'];
+            $url .= (string) $urlParts['path'];
         }
 
         if (isset($urlParts['query'])) {
-            $url .= '?' . $urlParts['query'];
+            $url .= '?' . (string) $urlParts['query'];
         }
 
         if (isset($urlParts['fragment'])) {
-            $url .= '#' . $urlParts['fragment'];
+            $url .= '#' . (string) $urlParts['fragment'];
         }
 
         return $url;
