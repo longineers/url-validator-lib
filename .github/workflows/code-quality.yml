@@ -171,7 +171,7 @@ jobs:
         XDEBUG_MODE: coverage
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./build/logs/coverage.xml
         flags: unittests
