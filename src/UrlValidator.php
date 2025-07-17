@@ -43,20 +43,20 @@ class UrlValidator
     }
 
     /**
-     * @param array<string, int<0, 65535>|string> $urlParts
+     * @param array{scheme?: string, host?: string|false, port?: int, user?: string, pass?: string, path?: string, query?: string, fragment?: string} $urlParts
      */
     private function reconstructUrl(array $urlParts): string
     {
         $url = '';
 
         if (isset($urlParts['scheme'])) {
-            $url .= (string) $urlParts['scheme'] . '://';
+            $url .= $urlParts['scheme'] . '://';
         }
 
         if (isset($urlParts['user'])) {
-            $url .= (string) $urlParts['user'];
+            $url .= $urlParts['user'];
             if (isset($urlParts['pass'])) {
-                $url .= ':' . (string) $urlParts['pass'];
+                $url .= ':' . $urlParts['pass'];
             }
             $url .= '@';
         }
@@ -66,19 +66,19 @@ class UrlValidator
         }
 
         if (isset($urlParts['port'])) {
-            $url .= ':' . (string) $urlParts['port'];
+            $url .= ':' . $urlParts['port'];
         }
 
         if (isset($urlParts['path'])) {
-            $url .= (string) $urlParts['path'];
+            $url .= $urlParts['path'];
         }
 
         if (isset($urlParts['query'])) {
-            $url .= '?' . (string) $urlParts['query'];
+            $url .= '?' . $urlParts['query'];
         }
 
         if (isset($urlParts['fragment'])) {
-            $url .= '#' . (string) $urlParts['fragment'];
+            $url .= '#' . $urlParts['fragment'];
         }
 
         return $url;
