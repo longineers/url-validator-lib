@@ -33,17 +33,7 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-interaction
 
-    - name: Create PHPStan config
-      run: |
-        cat > phpstan.neon << 'EOF'
-        parameters:
-            level: max
-            paths:
-                - src
-                - test
-            excludePaths:
-                - vendor
-        EOF
+    
 
     - name: Run PHPStan
       run: vendor/bin/phpstan analyse --no-progress

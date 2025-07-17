@@ -43,7 +43,7 @@ class UrlValidator
     }
 
     /**
-     * @param array<string, string|int> $urlParts
+     * @param array<string, int<0, 65535>|string> $urlParts
      */
     private function reconstructUrl(array $urlParts): string
     {
